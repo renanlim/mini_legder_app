@@ -6,32 +6,26 @@ import './App.css';
 const API_URL = 'http://localhost:5088/api/accounts';
 
 function App() {
-  // Controle de Navegação das Telas
   const [currentScreen, setCurrentScreen] = useState<'login' | 'register' | '2fa' | 'dashboard'>('login');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Dados Globais de Autenticação
+  // Autenticação
   const [accountId, setAccountId] = useState('');
   const [token, setToken] = useState('');
   const [accountData, setAccountData] = useState<any>(null);
 
-  // Estados do Formulário de Cadastro
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
 
-  // Estados do Formulário de Login
   const [loginAgency, setLoginAgency] = useState('');
   const [loginNumber, setLoginNumber] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Estado do 2FA e Transações
   const [pin, setPin] = useState('');
   const [amount, setAmount] = useState('');
   const [transactionType, setTransactionType] = useState('DEBIT');
-
-  // --- FUNÇÕES DE INTEGRAÇÃO COM A API ---
 
   const handleRegister = async () => {
     try {
@@ -60,9 +54,9 @@ function App() {
         password: loginPassword
       });
       
-      // Salva o ID da conta temporariamente para o 2FA
+      // Armazena o ID da conta na memória temporária para prosseguir com a validação 2FA
       setAccountId(response.data.accountId);
-      setSuccessMsg(response.data.message); // Ex: "PIN enviado por SMS"
+      setSuccessMsg(response.data.message);
       setCurrentScreen('2fa');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Credenciais inválidas.');
@@ -77,7 +71,7 @@ function App() {
         pin: pin
       });
       
-      // Recebeu o JWT Token!
+      // Autenticação bem-sucedida: Salva o JWT para as requisições autenticadas subsequentes
       setToken(response.data.token);
       await fetchAccountData(response.data.accountId);
       setCurrentScreen('dashboard');
@@ -103,7 +97,7 @@ function App() {
     try {
       setError(''); setSuccessMsg('');
       
-      // Enviamos o Token JWT no cabeçalho (Header) da requisição! Padrão de mercado.
+      // Operação restrita: Requer o envio do Token JWT no Header de Autorização
       await axios.post(`${API_URL}/${accountId}/transaction`, {
         amount: Number(amount),
         type: transactionType
@@ -120,13 +114,12 @@ function App() {
   };
 
   const logout = () => {
+    // Limpa todos os dados sensíveis da memória ao sair
     setToken(''); setAccountId(''); setAccountData(null);
     setLoginPassword(''); setPin('');
     setCurrentScreen('login');
     setSuccessMsg('Você saiu com segurança.');
   };
-
-  // --- RENDERIZAÇÃO DAS TELAS ---
 
   return (
     <div className="card">
@@ -138,7 +131,6 @@ function App() {
       {error && <div className="error">{error}</div>}
       {successMsg && <div style={{ color: '#059669', fontSize: '0.875rem', textAlign: 'center', marginBottom: '1rem' }}>{successMsg}</div>}
 
-      {/* TELA DE LOGIN */}
       {currentScreen === 'login' && (
         <>
           <div className="input-group">
@@ -162,7 +154,6 @@ function App() {
         </>
       )}
 
-      {/* TELA DE CADASTRO */}
       {currentScreen === 'register' && (
         <>
           <div className="input-group">
@@ -186,7 +177,6 @@ function App() {
         </>
       )}
 
-      {/* TELA DE 2FA (PIN) */}
       {currentScreen === '2fa' && (
         <div style={{ textAlign: 'center' }}>
           <ShieldCheck size={40} color="#059669" style={{ margin: '0 auto 1rem auto' }} />
@@ -205,7 +195,6 @@ function App() {
         </div>
       )}
 
-      {/* TELA DE DASHBOARD (LOGADO) */}
       {currentScreen === 'dashboard' && accountData && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
